@@ -14,6 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface RNCWebView : RCTViewComponentView
 @end
 
+#ifndef RNCWEBVIEW_SUBCLASS
 namespace facebook {
 namespace react {
     bool operator==(const RNCWebViewMenuItemsStruct& a, const RNCWebViewMenuItemsStruct& b)
@@ -22,6 +23,7 @@ namespace react {
     }
 }
 }
+#endif  // RNCWEBVIEW_SUBCLASS
 
 NS_ASSUME_NONNULL_END
 

@@ -41,7 +41,30 @@ RCT_ENUM_CONVERTER(RNCWebViewPermissionGrantType, (@{
     BOOL _shouldStartLoad;
 }
 
+- (instancetype)init{
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    return [super init];
+}
+
++(RNCWebViewManager*) sharedInstance
+{
+    static dispatch_once_t pred = 0;
+    __strong static RNCWebViewManager* _sharedObject = nil;
+
+    dispatch_once(&pred, ^{
+            _sharedObject = [[self alloc] init];
+        });
+
+    return _sharedObject;
+}
+
+
 RCT_EXPORT_MODULE(RNCWebView)
+
++ (BOOL)requiresMainQueueSetup
+{
+  return YES;
+}
 
 - (RNCView *)view
 {
@@ -59,7 +82,6 @@ RCT_EXPORT_VIEW_PROPERTY(onLoadingProgress, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onHttpError, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onShouldStartLoadWithRequest, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onContentProcessDidTerminate, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onOpenWindow, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(injectedJavaScript, NSString)
 RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptBeforeContentLoaded, NSString)
 RCT_EXPORT_VIEW_PROPERTY(injectedJavaScriptForMainFrameOnly, BOOL)
@@ -121,12 +143,8 @@ RCT_EXPORT_VIEW_PROPERTY(onMessage, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onScroll, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(enableApplePay, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(menuItems, NSArray);
-RCT_EXPORT_VIEW_PROPERTY(suppressMenuItems, NSArray);
-
 // New arch only
 RCT_CUSTOM_VIEW_PROPERTY(hasOnFileDownload, BOOL, RNCWebViewImpl) {}
-RCT_CUSTOM_VIEW_PROPERTY(hasOnOpenWindowEvent, BOOL, RNCWebViewImpl) {}
-
 RCT_EXPORT_VIEW_PROPERTY(onCustomMenuSelection, RCTDirectEventBlock)
 RCT_CUSTOM_VIEW_PROPERTY(pullToRefreshEnabled, BOOL, RNCWebViewImpl) {
   view.pullToRefreshEnabled = json == nil ? false : [RCTConvert BOOL: json];
@@ -213,7 +231,6 @@ QUICK_RCT_EXPORT_COMMAND_METHOD(requestFocus)
 
 QUICK_RCT_EXPORT_COMMAND_METHOD_PARAMS(postMessage, message:(NSString *)message, message)
 QUICK_RCT_EXPORT_COMMAND_METHOD_PARAMS(injectJavaScript, script:(NSString *)script, script)
-QUICK_RCT_EXPORT_COMMAND_METHOD_PARAMS(clearCache, includeDiskFiles:(BOOL)includeDiskFiles, includeDiskFiles)
 
 RCT_EXPORT_METHOD(shouldStartLoadWithLockIdentifier:(BOOL)shouldStart
                                         lockIdentifier:(double)lockIdentifier)

@@ -2,6 +2,7 @@
 #ifdef RCT_NEW_ARCH_ENABLED
 #import "RNCWebView.h"
 #import "RNCWebViewImpl.h"
+#import "RNCWebViewManager.h"
 
 #import <react/renderer/components/RNCWebViewSpec/ComponentDescriptors.h>
 #import <react/renderer/components/RNCWebViewSpec/EventEmitters.h>
@@ -63,9 +64,16 @@ auto stringToOnLoadingFinishNavigationTypeEnum(std::string value) {
     if (self = [super initWithFrame:frame]) {
         static const auto defaultProps = std::make_shared<const RNCWebViewProps>();
         _props = defaultProps;
-        
-        _view = [[RNCWebViewImpl alloc] init];
-        
+
+        id<UIApplicationDelegate> appDelegate = [UIApplication sharedApplication].delegate;
+        if(appDelegate){
+            if([appDelegate respondsToSelector:@selector(allocManagedView)]){
+                _view = [appDelegate performSelector:@selector(allocManagedView)];
+            }
+        }
+        if(_view == nil){
+            _view = [[RNCWebViewImpl alloc] init];
+        }
         _view.onShouldStartLoadWithRequest = [self](NSDictionary* dictionary) {
             if (_eventEmitter) {
                 auto webViewEventEmitter = std::static_pointer_cast<RNCWebViewEventEmitter const>(_eventEmitter);
@@ -228,7 +236,7 @@ auto stringToOnLoadingFinishNavigationTypeEnum(std::string value) {
                     .lockIdentifier = [[dictionary valueForKey:@"lockIdentifier"] doubleValue],
                     .title = std::string([[dictionary valueForKey:@"title"] UTF8String]),
                     .statusCode = [[dictionary valueForKey:@"statusCode"] intValue],
-                    .description = std::string([[dictionary valueForKey:@"description"] UTF8String]),
+                    .description = [dictionary valueForKey:@"description"] ? std::string([[dictionary valueForKey:@"description"] UTF8String]) : std::string(""),
                     .canGoBack = [[dictionary valueForKey:@"canGoBack"] boolValue],
                     .canGoForward = [[dictionary valueForKey:@"canGoBack"] boolValue],
                     .loading = [[dictionary valueForKey:@"loading"] boolValue]
@@ -374,15 +382,6 @@ auto stringToOnLoadingFinishNavigationTypeEnum(std::string value) {
         }
         [_view setMenuItems:newMenuItems];
     }
-    if(oldViewProps.suppressMenuItems != newViewProps.suppressMenuItems) {
-        NSMutableArray *suppressMenuItems = [NSMutableArray array];
-
-        for (const auto &menuItem: newViewProps.suppressMenuItems) {
-            [suppressMenuItems addObject: RCTNSStringFromString(menuItem)];
-        }
-        
-        [_view setSuppressMenuItems:suppressMenuItems];
-    }
     if (oldViewProps.hasOnFileDownload != newViewProps.hasOnFileDownload) {
         if (newViewProps.hasOnFileDownload) {
             _view.onFileDownload = [self](NSDictionary* dictionary) {
@@ -396,21 +395,6 @@ auto stringToOnLoadingFinishNavigationTypeEnum(std::string value) {
             };
         } else {
             _view.onFileDownload = nil;        
-        }
-    }
-    if (oldViewProps.hasOnOpenWindowEvent != newViewProps.hasOnOpenWindowEvent) {
-        if (newViewProps.hasOnOpenWindowEvent) {
-            _view.onOpenWindow = [self](NSDictionary* dictionary) {
-                if (_eventEmitter) {
-                    auto webViewEventEmitter = std::static_pointer_cast<RNCWebViewEventEmitter const>(_eventEmitter);
-                    facebook::react::RNCWebViewEventEmitter::OnOpenWindow data = {
-                        .targetUrl = std::string([[dictionary valueForKey:@"targetUrl"] UTF8String])
-                    };
-                    webViewEventEmitter->onOpenWindow(data);
-                }
-            };
-        } else {
-            _view.onOpenWindow = nil;
         }
     }
 //
